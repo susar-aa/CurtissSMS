@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Builds & Outputs
+dist/
+dist-electron/
+release/
+
+# Temporary / Scratch files
+*.log
+*.db
+*.db-wal
+*.db-shm
+*.txt
+test_mod.js
+test_script.js
+test_type.js
+
+# Local environment & data
+.env
+.env.local
+data/
