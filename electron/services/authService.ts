@@ -214,9 +214,12 @@ export class AuthService {
 
     // Rate-limiting target key:
     // If user is matched, keyed as user_${user.id}
-    // If PIN is invalid/unmatched, keyed as a deterministic SHA-256 hash digest (e.g. attempt_${hash})
-    // NEVER store raw PINs in target_key or auth_lockout_records table.
-    const targetKey = user ? `user_${user.id}` : `attempt_${crypto.createHash('sha256').update(pin).digest('hex').slice(0, 16)}`;
+    // If PIN is invalid/unmatched, keyed with a keyed HMAC using the secret pepper:
+    // This prevents precomputed dictionary enumeration of 5-digit PINs against lockout records.
+    // NEVER store raw PINs or unkeyed digests in target_key or auth_lockout_records table.
+    const targetKey = user 
+      ? `user_${user.id}` 
+      : `attempt_${crypto.createHmac('sha256', PinSecurityService.getHmacSecret()).update(pin).digest('hex').slice(0, 24)}`;
 
     // 2. If user found, check active status and verify cryptographic hash
     if (user) {
@@ -264,9 +267,14 @@ export class AuthService {
     const newFailedAttempts = currentLockout.failedAttempts + 1;
     const remainingAttempts = Math.max(0, this.MAX_FAILED_ATTEMPTS - newFailedAttempts);
 
+    // Record attempt under keyed targetKey as well as global_login
+    const targetLockout = this.getPersistentLockout(targetKey);
+    const newTargetFailed = targetLockout.failedAttempts + 1;
+
     if (newFailedAttempts >= this.MAX_FAILED_ATTEMPTS) {
       const lockedUntil = Date.now() + this.LOCKOUT_DURATION_MS;
       this.setPersistentLockout('global_login', newFailedAttempts, lockedUntil);
+      this.setPersistentLockout(targetKey, newTargetFailed, lockedUntil);
       return {
         success: false,
         error: `Too many failed attempts. Login locked for 5 minutes.`,
@@ -279,6 +287,7 @@ export class AuthService {
     }
 
     this.setPersistentLockout('global_login', newFailedAttempts, null);
+    this.setPersistentLockout(targetKey, newTargetFailed, null);
     return {
       success: false,
       error: `Invalid PIN. ${remainingAttempts} attempt${remainingAttempts === 1 ? '' : 's'} remaining before temporary lockout.`,

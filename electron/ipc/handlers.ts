@@ -12,6 +12,8 @@ import { StudentService } from '../services/studentService';
 import { FamilyService } from '../services/familyService';
 import { AcademicYearService } from '../services/academicYearService';
 import { FeeConfigurationService } from '../services/feeConfigurationService';
+import { FeePaymentService } from '../services/feePaymentService';
+import { ReportService } from '../services/reportService';
 import { PinSecurityService } from '../services/pinSecurity';
 import { 
   IApiResponse, 
@@ -56,7 +58,20 @@ import {
   IAnnualFeeSetting,
   ISetAnnualFeeInput,
   IFeeConfigFilterQuery,
-  IFeeConfigAuditLog
+  IFeeConfigAuditLog,
+  IStudentAnnualFeeItem,
+  IStudentFeeFilterQuery,
+  IRecordPaymentInput,
+  IReceiptDetails,
+  IFeeGenerationResult,
+  IFeeGenerationStatus,
+  IStudentReportFilter,
+  IStudentReportSummary,
+  IStudentReportItem,
+  IFeeReportFilter,
+  IFeeReportSummary,
+  IFeeReportItem,
+  ITwoPageStudentPrintProfile
 } from '../shared/types';
 
 let authServiceInstance: AuthService | null = null;
@@ -832,6 +847,192 @@ export function registerIpcHandlers(): void {
       authService.requireAdmin();
       const logs = feeConfigurationService.getFeeConfigAuditLogs(args?.limit);
       return { success: true, data: logs };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // ==========================================
+  // ANNUAL FEE GENERATION & PAYMENTS (Stage 11)
+  // ==========================================
+  const feePaymentService = new FeePaymentService(db);
+
+  // 1. Get Fee Generation Status (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.FEES.GET_GENERATION_STATUS, async (): Promise<IApiResponse<IFeeGenerationStatus>> => {
+    try {
+      authService.requireAuth();
+      const status = feePaymentService.getFeeGenerationStatus();
+      return { success: true, data: status };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 2. Generate Annual Fees for Year (Admin only)
+  ipcMain.handle(IPC_CHANNELS.FEES.GENERATE_ANNUAL_FEES, async (_, args: { year: number }): Promise<IApiResponse<IFeeGenerationResult>> => {
+    try {
+      const user = authService.requireAdmin();
+      const result = feePaymentService.generateAnnualFees(args.year, user.id);
+      return { success: result.status === 'Success', data: result, error: result.error };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 3. Retry Failed Fee Generation (Admin only)
+  ipcMain.handle(IPC_CHANNELS.FEES.RETRY_GENERATION, async (_, args: { year: number }): Promise<IApiResponse<IFeeGenerationResult>> => {
+    try {
+      const user = authService.requireAdmin();
+      const result = feePaymentService.generateAnnualFees(args.year, user.id);
+      return { success: result.status === 'Success', data: result, error: result.error };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 4. Run Startup Catch-up Fee Generation (Admin only or system)
+  ipcMain.handle(IPC_CHANNELS.FEES.RUN_CATCHUP, async (): Promise<IApiResponse<{ processed: boolean; message: string }>> => {
+    try {
+      authService.requireAdmin();
+      const result = feePaymentService.runStartupCatchupFeeGeneration();
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 5. Get Student Annual Fees List with filters (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.FEES.GET_STUDENT_FEES, async (_, query: IStudentFeeFilterQuery): Promise<IApiResponse<IPaginatedResult<IStudentAnnualFeeItem>>> => {
+    try {
+      authService.requireAuth();
+      const result = feePaymentService.getStudentFees(query || {});
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 6. Record Cash Payment (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.FEES.RECORD_CASH_PAYMENT, async (_, input: IRecordPaymentInput): Promise<IApiResponse<IReceiptDetails>> => {
+    try {
+      const user = authService.requireAuth();
+      const receipt = feePaymentService.recordCashPayment(user, input);
+      return { success: true, data: receipt };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 7. Get Receipt Details (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.FEES.GET_RECEIPT_DETAILS, async (_, args: { identifier: number | string }): Promise<IApiResponse<IReceiptDetails>> => {
+    try {
+      authService.requireAuth();
+      const receipt = feePaymentService.getReceiptDetails(args.identifier);
+      return { success: true, data: receipt };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 8. Get New Student Fee Setting (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.FEES.GET_NEW_STUDENT_FEE_SETTING, async (): Promise<IApiResponse<boolean>> => {
+    try {
+      authService.requireAuth();
+      const enabled = feePaymentService.getNewStudentFeeSetting();
+      return { success: true, data: enabled };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 9. Set New Student Fee Setting (Admin only)
+  ipcMain.handle(IPC_CHANNELS.FEES.SET_NEW_STUDENT_FEE_SETTING, async (_, args: { enabled: boolean }): Promise<IApiResponse<boolean>> => {
+    try {
+      const user = authService.requireAdmin();
+      const result = feePaymentService.setNewStudentFeeSetting(user, Boolean(args.enabled));
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // ==========================================
+  // REPORTS & STUDENT PRINTING (Stage 12)
+  // ==========================================
+  const reportService = new ReportService(db, studentService);
+
+  // 1. Get Student Report Summary (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.GET_STUDENT_REPORT_SUMMARY, async (_, filter: IStudentReportFilter): Promise<IApiResponse<IStudentReportSummary>> => {
+    try {
+      authService.requireAuth();
+      const summary = reportService.getStudentReportSummary(filter);
+      return { success: true, data: summary };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 2. Get Paginated Student Report (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.GET_STUDENT_REPORT, async (_, filter: IStudentReportFilter): Promise<IApiResponse<IPaginatedResult<IStudentReportItem>>> => {
+    try {
+      authService.requireAuth();
+      const result = reportService.getStudentReport(filter);
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 3. Export Students to CSV (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.EXPORT_STUDENTS_CSV, async (_, filter: IStudentReportFilter): Promise<IApiResponse<string>> => {
+    try {
+      authService.requireAuth();
+      const csv = reportService.exportStudentsCsv(filter);
+      return { success: true, data: csv };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 4. Get Fee Report Summary (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.GET_FEE_REPORT_SUMMARY, async (_, args: { academicYear?: number; paymentDateFrom?: string; paymentDateTo?: string }): Promise<IApiResponse<IFeeReportSummary>> => {
+    try {
+      authService.requireAuth();
+      const summary = reportService.getFeeReportSummary(args?.academicYear, args?.paymentDateFrom, args?.paymentDateTo);
+      return { success: true, data: summary };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 5. Get Paginated Fee Report (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.GET_FEE_REPORT, async (_, filter: IFeeReportFilter): Promise<IApiResponse<IPaginatedResult<IFeeReportItem>>> => {
+    try {
+      authService.requireAuth();
+      const result = reportService.getFeeReport(filter);
+      return { success: true, data: result };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 6. Export Fees to CSV (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.EXPORT_FEES_CSV, async (_, filter: IFeeReportFilter): Promise<IApiResponse<string>> => {
+    try {
+      authService.requireAuth();
+      const csv = reportService.exportFeesCsv(filter);
+      return { success: true, data: csv };
+    } catch (err) {
+      return { success: false, error: (err as Error).message };
+    }
+  });
+
+  // 7. Get Two-Page Student Print Profile (Staff & Admin)
+  ipcMain.handle(IPC_CHANNELS.REPORTS.GET_STUDENT_PRINT_PROFILE, async (_, args: { studentId: number }): Promise<IApiResponse<ITwoPageStudentPrintProfile>> => {
+    try {
+      const user = authService.requireAuth();
+      const profile = reportService.getTwoPageStudentPrintProfile(args.studentId, user);
+      return { success: true, data: profile };
     } catch (err) {
       return { success: false, error: (err as Error).message };
     }

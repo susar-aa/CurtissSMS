@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
 import { app, safeStorage } from 'electron';
 import Database from 'better-sqlite3';
 
@@ -35,6 +36,34 @@ export class PinSecurityService {
 
   public static isPackagedProduction(): boolean {
     return (app && typeof app.isPackaged === 'boolean') ? app.isPackaged : false;
+  }
+
+  /**
+   * Applies restrictive file permissions on Windows NTFS via icacls.
+   * Strips inherited permissions and grants access exclusively to the current user (Full Control).
+   * On POSIX/Unix systems, applies mode 0o600.
+   */
+  public static restrictSensitiveFilePermissions(filePath: string): void {
+    try {
+      if (!fs.existsSync(filePath)) return;
+
+      if (process.platform === 'win32') {
+        // Enforce Windows NTFS ACL restriction
+        // Remove inheritance and grant current user full access (:F)
+        try {
+          const username = process.env.USERNAME || process.env.USER;
+          if (username) {
+            execFileSync('icacls', [filePath, '/inheritance:r', '/grant:r', `${username}:(F)`], { stdio: 'ignore' });
+          }
+        } catch {
+          // If icacls fails, proceed gracefully
+        }
+      } else {
+        fs.chmodSync(filePath, 0o600);
+      }
+    } catch {
+      // Non-blocking permission security safeguard
+    }
   }
 
   /**
@@ -77,6 +106,7 @@ export class PinSecurityService {
             if (safeStorage && typeof safeStorage.isEncryptionAvailable === 'function' && safeStorage.isEncryptionAvailable()) {
               try {
                 fs.writeFileSync(pepperFile, safeStorage.encryptString(recSecret));
+                this.restrictSensitiveFilePermissions(pepperFile);
               } catch {}
             }
             return { isInitialized: true, source: 'recovery_key', requiresRecovery: false };
@@ -182,9 +212,11 @@ export class PinSecurityService {
       const recoveryKeyFile = path.join(storageDir, 'recovery_pepper.key');
 
       fs.writeFileSync(recoveryKeyFile, cleanSecret, { mode: 0o600 });
+      this.restrictSensitiveFilePermissions(recoveryKeyFile);
 
       if (safeStorage && typeof safeStorage.isEncryptionAvailable === 'function' && safeStorage.isEncryptionAvailable()) {
         fs.writeFileSync(pepperFile, safeStorage.encryptString(cleanSecret));
+        this.restrictSensitiveFilePermissions(pepperFile);
       }
       return true;
     } catch {

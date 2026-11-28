@@ -25,12 +25,14 @@ import {
   IPromotionResult,
   ICatchupPromotionResult
 } from '../../electron/shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 interface AcademicPromotionViewProps {
   currentUser: IAuthSession | null;
 }
 
 export const AcademicPromotionView: React.FC<AcademicPromotionViewProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<IPromotionSystemStatus | null>(null);
   const [logs, setLogs] = useState<IAnnualProcessingLog[]>([]);
   const [selectedYear, setSelectedYear] = useState<number | null>(null);

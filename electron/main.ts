@@ -20,6 +20,7 @@ import { initializeDatabase, closeDatabase } from './database/connection';
 import { DatabaseMigrator } from './database/migrator';
 import { registerIpcHandlers } from './ipc/handlers';
 import { AcademicYearService } from './services/academicYearService';
+import { FeePaymentService } from './services/feePaymentService';
 
 bootLog(`Electron app loaded: ${typeof app}`);
 
@@ -136,7 +137,17 @@ if (!hasLock) {
         logError('Non-fatal catchup promotion error during startup:', promotionErr);
       }
 
-      // 4. Create Windows Application Window
+      // 4. Reliable Offline Catch-up for Annual Fee Generation (Stage 11)
+      try {
+        bootLog('Checking pending annual fee generation (Startup fee catch-up)...');
+        const feePaymentService = new FeePaymentService(db);
+        const feeCatchupResult = feePaymentService.runStartupCatchupFeeGeneration();
+        bootLog(`Catch-up fee generation result: ${feeCatchupResult.message}`);
+      } catch (feeCatchupErr) {
+        logError('Non-fatal catchup fee generation error during startup:', feeCatchupErr);
+      }
+
+      // 5. Create Windows Application Window
       createWindow();
       bootLog('createWindow called successfully.');
     } catch (err) {

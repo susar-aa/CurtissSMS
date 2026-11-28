@@ -247,7 +247,12 @@ export class SchoolSettingsService {
       }
     }
 
-    // Language constraint
+    // Language constraint: only 'en' or 'si' are permitted
+    if (input.defaultLanguage !== undefined && input.defaultLanguage !== null) {
+      if (input.defaultLanguage !== 'en' && input.defaultLanguage !== 'si') {
+        throw new Error("Invalid default language. Only 'en' and 'si' are supported.");
+      }
+    }
     const lang = input.defaultLanguage === 'si' ? 'si' : 'en';
 
     this.db.prepare(`

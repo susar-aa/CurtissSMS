@@ -22,12 +22,14 @@ import {
   IFeeConfigAuditLog, 
   IAcademicYear 
 } from '../electron/shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 interface FeeConfigurationViewProps {
   currentUser: IAuthSession;
 }
 
 export const FeeConfigurationView: React.FC<FeeConfigurationViewProps> = ({ currentUser }) => {
+  const { t, formatCurrency } = useTranslation();
   // Navigation & Data States
   const [configurations, setConfigurations] = useState<IAnnualFeeSetting[]>([]);
   const [academicYears, setAcademicYears] = useState<IAcademicYear[]>([]);

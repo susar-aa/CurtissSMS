@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Card, Badge, Button } from '../components/Card';
 import { IDatabaseHealth, ISystemInfo, IBackupResult } from '../../shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 interface DashboardViewProps {
   systemInfo: ISystemInfo | null;
@@ -23,6 +24,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   dbHealth,
   onRefreshHealth,
 }) => {
+  const { t } = useTranslation();
   const [backupLoading, setBackupLoading] = useState(false);
   const [lastBackupResult, setLastBackupResult] = useState<IBackupResult | null>(null);
 
@@ -51,19 +53,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* Top Banner */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">System Dashboard</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">{t('dash_title')}</h1>
           <p className="text-xs text-slate-500 mt-1">
-            CurtissSMS Architecture & Diagnostics Foundation (Stage 01)
+            {t('dash_subtitle')}
           </p>
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm" onClick={onRefreshHealth}>
             <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-            Refresh Diagnostics
+            {t('dash_refresh')}
           </Button>
           <Button variant="primary" size="sm" onClick={handleBackup} disabled={backupLoading}>
             <HardDriveDownload className="w-3.5 h-3.5 mr-1.5" />
-            {backupLoading ? 'Creating Backup...' : 'Backup SQLite DB'}
+            {backupLoading ? t('dash_backup_in_progress') : t('dash_backup_db')}
           </Button>
         </div>
       </div>
@@ -72,41 +74,41 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-medium">SQLite Engine</span>
+            <span className="text-xs font-medium">{t('dash_sqlite_engine')}</span>
             <Database className="w-4 h-4 text-slate-400" />
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-2xl font-bold text-slate-900">
-              {dbHealth?.status === 'ok' ? 'Healthy' : 'Degraded'}
+              {dbHealth?.status === 'ok' ? t('dash_healthy') : t('dash_degraded')}
             </span>
             <Badge variant={dbHealth?.status === 'ok' ? 'success' : 'warning'}>
               WAL Active
             </Badge>
           </div>
           <p className="text-[11px] text-slate-500 mt-2">
-            Foreign keys: {dbHealth?.foreignKeysOk ? 'Enforced' : 'Disabled'}
+            {t('dash_foreign_keys')}: {dbHealth?.foreignKeysOk ? t('dash_enforced') : t('dash_disabled')}
           </p>
         </Card>
 
         <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-medium">Schema Version</span>
+            <span className="text-xs font-medium">{t('dash_schema_version')}</span>
             <Layers className="w-4 h-4 text-slate-400" />
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-2xl font-bold text-slate-900">
               v{dbHealth?.migrationVersion ?? 0}
             </span>
-            <Badge variant="neutral">Initial Schema</Badge>
+            <Badge variant="neutral">Active Schema</Badge>
           </div>
           <p className="text-[11px] text-slate-500 mt-2">
-            Active Tables: {dbHealth?.tableCount ?? 0}
+            {t('dash_active_tables')}: {dbHealth?.tableCount ?? 0}
           </p>
         </Card>
 
         <Card className="flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-medium">Database File Size</span>
+            <span className="text-xs font-medium">{t('dash_db_size')}</span>
             <Activity className="w-4 h-4 text-slate-400" />
           </div>
           <div className="flex items-baseline space-x-2">
@@ -115,7 +117,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-2">
-            Storage: Local Electron userData
+            {t('dash_storage_local')}
           </p>
         </Card>
 

@@ -5,13 +5,13 @@ import { LoginView } from './views/LoginView';
 import { DashboardView } from './views/DashboardView';
 import { StudentManagementView } from './views/StudentManagementView';
 import { AcademicPromotionView } from './views/AcademicPromotionView';
-import { FeeConfigurationView } from './views/FeeConfigurationView';
-import { FeesPlaceholderView } from './views/FeesPlaceholderView';
-import { ReportsPlaceholderView } from './views/ReportsPlaceholderView';
+import { FeeManagementView } from './views/FeeManagementView';
+import { ReportsView } from './views/ReportsView';
 import { SettingsPlaceholderView } from './views/SettingsPlaceholderView';
 import { NavigationTab, ISystemInfo, IDatabaseHealth, IAuthSession } from '../shared/types';
+import { I18nProvider } from './context/I18nContext';
 
-export const App: React.FC = () => {
+export const AppContent: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<IAuthSession | null>(null);
   const [hasUsers, setHasUsers] = useState<boolean>(true);
   const [isAuthChecking, setIsAuthChecking] = useState<boolean>(true);
@@ -161,8 +161,8 @@ export const App: React.FC = () => {
             )}
             {activeTab === 'students' && <StudentManagementView currentUser={currentUser} />}
             {activeTab === 'promotions' && <AcademicPromotionView currentUser={currentUser} />}
-            {activeTab === 'fees' && <FeeConfigurationView currentUser={currentUser} />}
-            {activeTab === 'reports' && <ReportsPlaceholderView />}
+            {activeTab === 'fees' && <FeeManagementView currentUser={currentUser} />}
+            {activeTab === 'reports' && <ReportsView currentUser={currentUser} />}
             {activeTab === 'settings' && currentUser.role === 'Admin' && (
               <SettingsPlaceholderView systemInfo={systemInfo} dbHealth={dbHealth} />
             )}
@@ -170,6 +170,14 @@ export const App: React.FC = () => {
         </main>
       </div>
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
   );
 };
 

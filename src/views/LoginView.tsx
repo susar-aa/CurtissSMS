@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { KeyRound, Shield, UserCheck, AlertTriangle, Delete, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '../components/Card';
 import { IAuthSession } from '../../shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 interface LoginViewProps {
   onLoginSuccess: (user: IAuthSession) => void;
@@ -14,6 +15,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
   hasUsers,
   onRefreshHasUsers
 }) => {
+  const { t } = useTranslation();
   const [pin, setPin] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -245,17 +247,17 @@ export const LoginView: React.FC<LoginViewProps> = ({
           <KeyRound className="w-6 h-6" />
         </div>
 
-        <h1 className="text-lg font-bold text-slate-900 tracking-tight">CurtissSMS</h1>
-        <p className="text-xs text-slate-500 mb-6">Enter your 5-digit PIN to unlock</p>
+        <h1 className="text-lg font-bold text-slate-900 tracking-tight">{t('app_name')}</h1>
+        <p className="text-xs text-slate-500 mb-6">{t('auth_login_title')}</p>
 
         {/* Lockout Warning Banner */}
         {remainingSeconds > 0 ? (
           <div className="w-full mb-6 p-3.5 bg-rose-50 border border-rose-200 rounded-lg text-xs text-rose-800 flex items-center space-x-2.5">
             <Clock className="w-4 h-4 text-rose-600 shrink-0 animate-pulse" />
             <div>
-              <p className="font-semibold">Terminal Locked</p>
+              <p className="font-semibold">{t('auth_terminal_locked')}</p>
               <p className="text-[11px] text-rose-700">
-                Too many failed attempts. Try again in {remainingSeconds}s.
+                {t('auth_too_many_attempts').replace('{seconds}', remainingSeconds.toString())}
               </p>
             </div>
           </div>
@@ -303,7 +305,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
             onClick={() => setPin('')}
             className="h-12 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 text-xs font-medium hover:bg-slate-100 active:bg-slate-200 transition-colors disabled:opacity-40"
           >
-            Clear
+            {t('auth_clear')}
           </button>
           <button
             type="button"
@@ -324,7 +326,7 @@ export const LoginView: React.FC<LoginViewProps> = ({
         </div>
 
         <p className="text-[10px] text-slate-400 mt-2">
-          Hardware keyboard numbers (0–9) & Backspace supported
+          {t('auth_keyboard_hint')}
         </p>
       </div>
     </div>

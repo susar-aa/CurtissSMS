@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Building2, Upload, Trash2, Check, AlertCircle, Save, Phone, Mail, Globe, Hash, MapPin } from 'lucide-react';
 import { Card, Button, Badge } from '../components/Card';
 import { ISchoolSettings, IUpdateSchoolSettingsInput } from '../../shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 export const SchoolProfileSettingsView: React.FC = () => {
+  const { t, setLanguage } = useTranslation();
   const [settings, setSettings] = useState<ISchoolSettings | null>(null);
   const [formData, setFormData] = useState<IUpdateSchoolSettingsInput>({
     schoolName: '',
@@ -18,6 +20,8 @@ export const SchoolProfileSettingsView: React.FC = () => {
     extraInfo: '',
     defaultLanguage: 'en'
   });
+  const [autoGenFeeSetting, setAutoGenFeeSetting] = useState<boolean>(false);
+  const [updatingFeeSetting, setUpdatingFeeSetting] = useState<boolean>(false);
 
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -58,6 +62,11 @@ export const SchoolProfileSettingsView: React.FC = () => {
           setLogoPreview(logoRes.data);
         } else {
           setLogoPreview(null);
+        }
+
+        const feeSettingRes = await window.api.getNewStudentFeeSetting();
+        if (feeSettingRes.success && feeSettingRes.data !== undefined) {
+          setAutoGenFeeSetting(Boolean(feeSettingRes.data));
         }
       }
     } catch (err) {
@@ -401,6 +410,50 @@ export const SchoolProfileSettingsView: React.FC = () => {
                 placeholder="e.g. Colombo, Kandy"
               />
             </div>
+          </div>
+        </Card>
+
+        {/* Section 5: Admission & Fee Automation (Stage 11) */}
+        <Card title="Admission Fee Automation" subtitle="Automatic generation of annual fee upon new student registration">
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-0.5 max-w-lg">
+              <span className="text-xs font-semibold text-slate-900 block">
+                Auto-generate current-year fee when registering new students
+              </span>
+              <span className="text-[11px] text-slate-500 block">
+                When enabled, saving a new student record automatically generates an annual Development & Facility Fee invoice for the current academic year if configured. Default is OFF. Changing this setting does not alter existing records.
+              </span>
+            </div>
+            <button
+              type="button"
+              disabled={updatingFeeSetting}
+              onClick={async () => {
+                try {
+                  setUpdatingFeeSetting(true);
+                  const nextVal = !autoGenFeeSetting;
+                  const res = await window.api.setNewStudentFeeSetting(nextVal);
+                  if (res.success) {
+                    setAutoGenFeeSetting(nextVal);
+                    setSuccessMsg(`New student fee auto-generation ${nextVal ? 'ENABLED' : 'DISABLED'} successfully.`);
+                  } else {
+                    setErrorMsg(res.error || 'Failed to update setting.');
+                  }
+                } catch (err) {
+                  setErrorMsg((err as Error).message);
+                } finally {
+                  setUpdatingFeeSetting(false);
+                }
+              }}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                autoGenFeeSetting ? 'bg-slate-900' : 'bg-slate-200'
+              } ${updatingFeeSetting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                  autoGenFeeSetting ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
         </Card>
 

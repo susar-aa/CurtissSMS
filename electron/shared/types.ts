@@ -524,3 +524,215 @@ export interface IFeeConfigAuditLog {
   userName?: string | null;
   createdAt: string;
 }
+
+// ==========================================
+// Fee Generation & Payments Interfaces (Stage 11)
+// ==========================================
+
+export type FeeStatus = 'Unpaid' | 'Paid';
+
+export interface IStudentAnnualFeeItem {
+  id: number;
+  studentId: number;
+  admissionNumber: string;
+  fullName: string;
+  currentGrade: number;
+  studentStatus: StudentStatus;
+  academicYear: number;
+  feeAmount: number;
+  status: FeeStatus;
+  isFeeExempt: boolean;
+  createdAt: string;
+  updatedAt: string;
+  // Payment info if Paid
+  paymentId?: number | null;
+  receiptNumber?: string | null;
+  paymentDate?: string | null;
+  paymentAmount?: number | null;
+  recordedBy?: number | null;
+  recordedByName?: string | null;
+  notes?: string | null;
+}
+
+export interface IStudentFeeFilterQuery {
+  page?: number;
+  pageSize?: number;
+  academicYear?: number;
+  grade?: number;
+  status?: FeeStatus;
+  search?: string;
+}
+
+export interface IRecordPaymentInput {
+  studentAnnualFeeId: number;
+  paymentDate: string; // YYYY-MM-DD
+  amount: number;
+  notes?: string;
+}
+
+export interface IReceiptDetails {
+  paymentId: number;
+  studentAnnualFeeId: number;
+  receiptNumber: string;
+  paymentDate: string;
+  amount: number;
+  paymentMethod: 'Cash';
+  recordedByName: string;
+  recordedByRole: string;
+  notes?: string | null;
+  studentId: number;
+  admissionNumber: string;
+  studentName: string;
+  currentGrade: number;
+  academicYear: number;
+  feeAmount: number;
+  feeDescription: string;
+  schoolSettings: ISchoolSettings;
+  schoolLogoDataUrl?: string | null;
+  issuedAt: string;
+}
+
+export interface IFeeGenerationResult {
+  academicYear: number;
+  status: 'Success' | 'Failed';
+  recordsGenerated: number;
+  recordsSkipped: number;
+  exemptZeroFeeCount: number;
+  error?: string;
+  message: string;
+}
+
+export interface IFeeGenerationStatus {
+  currentCalendarYear: number;
+  isCurrentYearConfigured: boolean;
+  currentYearConfigAmount: number | null;
+  isGenerated: boolean;
+  lastLog: IAnnualProcessingLog | null;
+  totalActiveStudents: number;
+  generatedCount: number;
+  paidCount: number;
+  unpaidCount: number;
+  exemptCount: number;
+  autoGenerateNewStudentFee: boolean;
+}
+
+// ==========================================
+// Reports & Student Printing Interfaces (Stage 12)
+// ==========================================
+
+export interface IStudentReportFilter {
+  page?: number;
+  pageSize?: number;
+  grade?: number;
+  status?: StudentStatus;
+  gender?: StudentGender;
+  houseId?: number;
+  transportationMethodId?: number;
+  admissionDateFrom?: string; // YYYY-MM-DD
+  admissionDateTo?: string;   // YYYY-MM-DD
+  search?: string;
+}
+
+export interface IStudentReportSummary {
+  totalStudents: number;
+  activeCount: number;
+  leavedCount: number;
+  passedOutCount: number;
+  maleCount: number;
+  femaleCount: number;
+  gradeCounts: Record<number, number>;
+  houseCounts: Array<{ houseId: number | null; houseName: string; count: number; colorHex: string | null }>;
+  transportationCounts: Array<{ transportationMethodId: number | null; transportationMethodName: string; count: number }>;
+}
+
+export interface IStudentReportItem {
+  id: number;
+  admissionNumber: string;
+  fullName: string;
+  gender: StudentGender;
+  dateOfBirth: string;
+  currentGrade: number;
+  status: StudentStatus;
+  admissionDate: string;
+  houseName: string | null;
+  houseColor: string | null;
+  transportationMethodName: string | null;
+  fullAddress: string | null;
+  previousSchoolName: string | null;
+  previousSchoolIdNumber: string | null;
+}
+
+export interface IFeeReportFilter {
+  page?: number;
+  pageSize?: number;
+  academicYear?: number;
+  grade?: number;
+  status?: FeeStatus;
+  isFeeExempt?: boolean;
+  paymentDateFrom?: string; // YYYY-MM-DD
+  paymentDateTo?: string;   // YYYY-MM-DD
+  search?: string;          // student name, admission number, receipt number
+}
+
+export interface IFeeReportSummary {
+  academicYear: number;
+  totalInvoices: number;
+  paidCount: number;
+  unpaidCount: number;
+  exemptCount: number;
+  expectedAmountLkr: number;
+  actualCollectedLkr: number;
+  outstandingLkr: number;
+  filteredCollectedLkr?: number | null;
+  gradeBreakdown: Array<{
+    grade: number;
+    totalStudents: number;
+    paidCount: number;
+    unpaidCount: number;
+    exemptCount: number;
+    collectedLkr: number;
+    outstandingLkr: number;
+  }>;
+}
+
+export interface IFeeReportItem {
+  id: number;
+  studentId: number;
+  admissionNumber: string;
+  fullName: string;
+  currentGrade: number;
+  academicYear: number;
+  feeAmount: number;
+  status: FeeStatus;
+  isFeeExempt: boolean;
+  paymentId: number | null;
+  receiptNumber: string | null;
+  paymentDate: string | null;
+  paymentAmount: number | null;
+  paymentMethod: string | null;
+  recordedByName: string | null;
+  notes: string | null;
+}
+
+export interface IStudentFeeHistoryRecord {
+  academicYear: number;
+  feeAmount: number;
+  status: FeeStatus;
+  isFeeExempt: boolean;
+  paymentDate: string | null;
+  receiptNumber: string | null;
+  paymentAmount: number | null;
+  recordedByName: string | null;
+  notes: string | null;
+}
+
+export interface ITwoPageStudentPrintProfile {
+  student: IStudentDetail;
+  schoolSettings: ISchoolSettings;
+  schoolLogoDataUrl: string | null;
+  feeHistory: IStudentFeeHistoryRecord[];
+  printedAt: string;
+  printedBy: string;
+}
+
+

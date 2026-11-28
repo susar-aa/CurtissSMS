@@ -9,6 +9,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { NavigationTab, UserRole } from '../../shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 interface SidebarProps {
   activeTab: NavigationTab;
@@ -17,13 +18,15 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, userRole }) => {
+  const { t } = useTranslation();
+
   const allNavItems = [
-    { id: 'dashboard' as NavigationTab, label: 'Dashboard', icon: LayoutDashboard, adminOnly: false },
-    { id: 'students' as NavigationTab, label: 'Students', icon: GraduationCap, adminOnly: false },
-    { id: 'promotions' as NavigationTab, label: 'Academic Promotions', icon: Calendar, adminOnly: false },
-    { id: 'fees' as NavigationTab, label: 'Fee Management', icon: CreditCard, adminOnly: false },
-    { id: 'reports' as NavigationTab, label: 'Reports & Print', icon: FileText, adminOnly: false },
-    { id: 'settings' as NavigationTab, label: 'System Settings', icon: Settings, adminOnly: true },
+    { id: 'dashboard' as NavigationTab, label: t('nav_dashboard'), icon: LayoutDashboard, adminOnly: false },
+    { id: 'students' as NavigationTab, label: t('nav_students'), icon: GraduationCap, adminOnly: false },
+    { id: 'promotions' as NavigationTab, label: t('nav_promotions'), icon: Calendar, adminOnly: false },
+    { id: 'fees' as NavigationTab, label: t('nav_fees'), icon: CreditCard, adminOnly: false },
+    { id: 'reports' as NavigationTab, label: t('nav_reports'), icon: FileText, adminOnly: false },
+    { id: 'settings' as NavigationTab, label: t('nav_settings'), icon: Settings, adminOnly: true },
   ];
 
   // RBAC: Staff cannot see Settings
@@ -35,7 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, userRo
         {/* Navigation Section */}
         <div className="p-3">
           <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 px-3 py-2">
-            Main Navigation
+            {t('nav_main_menu')}
           </p>
           <nav className="space-y-1">
             {navItems.map((item) => {

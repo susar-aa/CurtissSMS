@@ -59,6 +59,7 @@ import {
   ICustomMergeResolution,
   IFamilyMergePreview
 } from '../../electron/shared/types';
+import { useTranslation } from '../context/I18nContext';
 
 interface StudentManagementViewProps {
   currentUser: IAuthSession | null;
@@ -150,6 +151,7 @@ const focusNextEditField = (currentFieldId: string) => {
 };
 
 export const StudentManagementView: React.FC<StudentManagementViewProps> = ({ currentUser }) => {
+  const { t } = useTranslation();
   // Navigation mode: 'list' | 'register' | 'profile' | 'edit'
   const [viewMode, setViewMode] = useState<'list' | 'register' | 'profile' | 'edit'>('list');
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);

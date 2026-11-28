@@ -20,6 +20,7 @@ import { migration010 } from './migrations/010_parent_guardian_management_stage0
 import { migration011 } from './migrations/011_sibling_management_stage08';
 import { migration012 } from './migrations/012_academic_years_and_promotions_stage09';
 import { migration013 } from './migrations/013_annual_fee_configuration_stage10';
+import { migration014 } from './migrations/014_fee_generation_and_payments_stage11';
 
 export const ALL_MIGRATIONS: IMigration[] = [
   migration001,
@@ -34,7 +35,8 @@ export const ALL_MIGRATIONS: IMigration[] = [
   migration010,
   migration011,
   migration012,
-  migration013
+  migration013,
+  migration014
 ];
 
 export class DatabaseMigrator {

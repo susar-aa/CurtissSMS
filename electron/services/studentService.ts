@@ -18,15 +18,18 @@ import {
 } from '../shared/types';
 import { SchoolSettingsService } from './schoolSettingsService';
 import { FamilyService } from './familyService';
+import { FeePaymentService } from './feePaymentService';
 
 export class StudentService {
   private db: Database.Database;
   private photosStorageDir: string;
   private familyService: FamilyService;
+  private feePaymentService: FeePaymentService;
 
   constructor(db: Database.Database, customStorageDir?: string) {
     this.db = db;
     this.familyService = new FamilyService(db);
+    this.feePaymentService = new FeePaymentService(db);
     if (customStorageDir) {
       this.photosStorageDir = path.resolve(customStorageDir);
     } else {
@@ -302,6 +305,14 @@ export class StudentService {
           INSERT INTO student_notes (student_id, note_text, created_by)
           VALUES (?, ?, ?)
         `).run(createdStudentId, input.initialNote.trim(), user.id);
+      }
+
+      // Stage 11: Auto-generate current-year fee if enabled in system_settings
+      // Must be atomic inside registration transaction
+      const feeGenRes = this.feePaymentService.generateNewAdmissionFee(createdStudentId, grade, user.id);
+      if (!feeGenRes.generated && feeGenRes.message?.includes('not configured')) {
+        // Missing configuration logged without stopping registration
+        console.warn(`[STUDENT REGISTRATION] ${feeGenRes.message}`);
       }
 
       // Log in audit_logs

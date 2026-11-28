@@ -43,7 +43,20 @@ import {
   IAnnualFeeSetting,
   ISetAnnualFeeInput,
   IFeeConfigFilterQuery,
-  IFeeConfigAuditLog
+  IFeeConfigAuditLog,
+  IStudentAnnualFeeItem,
+  IStudentFeeFilterQuery,
+  IRecordPaymentInput,
+  IReceiptDetails,
+  IFeeGenerationResult,
+  IFeeGenerationStatus,
+  IStudentReportFilter,
+  IStudentReportSummary,
+  IStudentReportItem,
+  IFeeReportFilter,
+  IFeeReportSummary,
+  IFeeReportItem,
+  ITwoPageStudentPrintProfile
 } from './shared/types';
 
 const api = {
@@ -250,6 +263,58 @@ const api = {
   },
   getFeeConfigAuditLogs: (limit?: number): Promise<IApiResponse<IFeeConfigAuditLog[]>> => {
     return ipcRenderer.invoke(IPC_CHANNELS.FEE_CONFIG.GET_AUDIT_LOGS, { limit });
+  },
+
+  // Fee Generation & Payments (Stage 11)
+  getFeeGenerationStatus: (): Promise<IApiResponse<IFeeGenerationStatus>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.GET_GENERATION_STATUS);
+  },
+  generateAnnualFees: (year: number): Promise<IApiResponse<IFeeGenerationResult>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.GENERATE_ANNUAL_FEES, { year });
+  },
+  retryFeeGeneration: (year: number): Promise<IApiResponse<IFeeGenerationResult>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.RETRY_GENERATION, { year });
+  },
+  runFeeCatchup: (): Promise<IApiResponse<{ processed: boolean; message: string }>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.RUN_CATCHUP);
+  },
+  getStudentFees: (query?: IStudentFeeFilterQuery): Promise<IApiResponse<IPaginatedResult<IStudentAnnualFeeItem>>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.GET_STUDENT_FEES, query || {});
+  },
+  recordCashPayment: (input: IRecordPaymentInput): Promise<IApiResponse<IReceiptDetails>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.RECORD_CASH_PAYMENT, input);
+  },
+  getReceiptDetails: (paymentIdOrReceiptNumber: number | string): Promise<IApiResponse<IReceiptDetails>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.GET_RECEIPT_DETAILS, { identifier: paymentIdOrReceiptNumber });
+  },
+  getNewStudentFeeSetting: (): Promise<IApiResponse<boolean>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.GET_NEW_STUDENT_FEE_SETTING);
+  },
+  setNewStudentFeeSetting: (enabled: boolean): Promise<IApiResponse<boolean>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.FEES.SET_NEW_STUDENT_FEE_SETTING, { enabled });
+  },
+
+  // Reports & Student Printing (Stage 12)
+  getStudentReportSummary: (filter?: IStudentReportFilter): Promise<IApiResponse<IStudentReportSummary>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.GET_STUDENT_REPORT_SUMMARY, filter || {});
+  },
+  getStudentReport: (filter?: IStudentReportFilter): Promise<IApiResponse<IPaginatedResult<IStudentReportItem>>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.GET_STUDENT_REPORT, filter || {});
+  },
+  exportStudentsCsv: (filter?: IStudentReportFilter): Promise<IApiResponse<string>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.EXPORT_STUDENTS_CSV, filter || {});
+  },
+  getFeeReportSummary: (academicYear?: number, paymentDateFrom?: string, paymentDateTo?: string): Promise<IApiResponse<IFeeReportSummary>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.GET_FEE_REPORT_SUMMARY, { academicYear, paymentDateFrom, paymentDateTo });
+  },
+  getFeeReport: (filter?: IFeeReportFilter): Promise<IApiResponse<IPaginatedResult<IFeeReportItem>>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.GET_FEE_REPORT, filter || {});
+  },
+  exportFeesCsv: (filter?: IFeeReportFilter): Promise<IApiResponse<string>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.EXPORT_FEES_CSV, filter || {});
+  },
+  getStudentPrintProfile: (studentId: number): Promise<IApiResponse<ITwoPageStudentPrintProfile>> => {
+    return ipcRenderer.invoke(IPC_CHANNELS.REPORTS.GET_STUDENT_PRINT_PROFILE, { studentId });
   }
 };
 

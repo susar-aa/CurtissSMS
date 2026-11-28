@@ -82,5 +82,25 @@ export const IPC_CHANNELS = {
     UPDATE: 'fee-config:update',
     DELETE: 'fee-config:delete',
     GET_AUDIT_LOGS: 'fee-config:get-audit-logs',
+  },
+  FEES: {
+    GENERATE_ANNUAL_FEES: 'fees:generate-annual-fees',
+    RETRY_GENERATION: 'fees:retry-generation',
+    RUN_CATCHUP: 'fees:run-catchup',
+    GET_GENERATION_STATUS: 'fees:get-generation-status',
+    GET_STUDENT_FEES: 'fees:get-student-fees',
+    RECORD_CASH_PAYMENT: 'fees:record-cash-payment',
+    GET_RECEIPT_DETAILS: 'fees:get-receipt-details',
+    GET_NEW_STUDENT_FEE_SETTING: 'fees:get-new-student-fee-setting',
+    SET_NEW_STUDENT_FEE_SETTING: 'fees:set-new-student-fee-setting',
+  },
+  REPORTS: {
+    GET_STUDENT_REPORT_SUMMARY: 'reports:get-student-report-summary',
+    GET_STUDENT_REPORT: 'reports:get-student-report',
+    EXPORT_STUDENTS_CSV: 'reports:export-students-csv',
+    GET_FEE_REPORT_SUMMARY: 'reports:get-fee-report-summary',
+    GET_FEE_REPORT: 'reports:get-fee-report',
+    EXPORT_FEES_CSV: 'reports:export-fees-csv',
+    GET_STUDENT_PRINT_PROFILE: 'reports:get-student-print-profile',
   }
 } as const;
